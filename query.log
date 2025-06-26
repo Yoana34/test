@@ -1,0 +1,22 @@
+2025-06-26 15:08:14 - SQL: SELECT title, credits FROM course ORDER BY title, credits;
+2025-06-26 15:10:16 - SQL: SELECT title, credits FROM course ORDER BY title, credits;
+2025-06-26 15:16:57 - SQL: SELECT title, credits FROM course ORDER BY title, credits;
+2025-06-26 15:49:53 - SQL: SELECT course.title, course.credits, course.dept_name
+FROM course
+WHERE course.course_id IN (
+    SELECT prereq.course_id
+    FROM prereq
+    GROUP BY prereq.course_id
+    HAVING COUNT(prereq.prereq_id) > 1
+);
+2025-06-26 15:50:59 - SQL: SELECT name
+FROM student
+WHERE ID IN (
+    SELECT s_ID
+    FROM advisor
+    GROUP BY s_ID
+    HAVING COUNT(i_ID) > 1
+);
+2025-06-26 15:52:09 - SQL: SELECT title
+FROM course
+WHERE course_id NOT IN (SELECT DISTINCT course_id FROM prereq)
