@@ -1,10 +1,9 @@
 from typing import Any, Dict
-import os 
+import os
 import logging
 
-import MySQLdb  
+import MySQLdb
 from mcp.server.fastmcp import FastMCP
-
 
 # Create MCP server instance
 mcp = FastMCP("mysql-server")
@@ -13,8 +12,8 @@ mcp = FastMCP("mysql-server")
 DB_CONFIG = {
     "host": os.getenv("DB_HOST", "localhost"),
     "user": os.getenv("DB_USER", "test"),
-    "passwd": os.getenv("DB_PASSWORD", "test"), 
-    "db": os.getenv("DB_NAME", "test_db"),  
+    "passwd": os.getenv("DB_PASSWORD", "test"),
+    "db": os.getenv("DB_NAME", "test_db"),
     "port": int(os.getenv("DB_PORT", 3306))
 }
 
@@ -42,19 +41,19 @@ def get_schema() -> Dict[str, Any]:
     try:
         # Create dictionary cursor
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
-        
+
         # Get all table names
         cursor.execute("SHOW TABLES")
         tables = cursor.fetchall()
         table_names = [list(table.values())[0] for table in tables]
-        
+
         # Get structure for each table
         schema = {}
         for table_name in table_names:
             cursor.execute(f"DESCRIBE `{table_name}`")
             columns = cursor.fetchall()
             table_schema = []
-            
+
             for column in columns:
                 table_schema.append({
                     "name": column["Field"],
@@ -64,9 +63,9 @@ def get_schema() -> Dict[str, Any]:
                     "default": column["Default"],
                     "extra": column["Extra"]
                 })
-            
+
             schema[table_name] = table_schema
-        
+
         return {
             "database": DB_CONFIG["db"],
             "tables": schema
@@ -98,16 +97,16 @@ def query_data(sql: str) -> Dict[str, Any]:
     try:
         # Create dictionary cursor
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
-        
+
         # Start read-only transaction
         cursor.execute("SET TRANSACTION READ ONLY")
         cursor.execute("START TRANSACTION")
-        
+
         try:
             cursor.execute(sql)
             results = cursor.fetchall()
             conn.commit()
-            
+
             # Convert results to serializable format
             return {
                 "success": True,
@@ -134,11 +133,11 @@ def get_tables() -> Dict[str, Any]:
     try:
         # Create dictionary cursor
         cursor = conn.cursor(MySQLdb.cursors.DictCursor)
-        
+
         cursor.execute("SHOW TABLES")
         tables = cursor.fetchall()
         table_names = [list(table.values())[0] for table in tables]
-        
+
         return {
             "database": DB_CONFIG["db"],
             "tables": table_names
@@ -153,7 +152,7 @@ def validate_config():
     """Validate database configuration"""
     required_vars = ["DB_HOST", "DB_USER", "DB_PASSWORD", "DB_NAME"]
     missing = [var for var in required_vars if not os.getenv(var)]
-    
+
     if missing:
         logger.warning(f"Missing environment variables: {', '.join(missing)}")
         logger.warning("Using default values, which may not work in production.")
@@ -165,4 +164,12 @@ def main():
 
 
 if __name__ == "__main__":
-    mcp.run()
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "cli":
+        from cli import run_cli
+        from llm_client import generate_sql_from_prompt
+        from mcp_client import get_schema, query_data
+        print("进入命令行自然语言查询模式")
+        run_cli(get_schema, query_data, generate_sql_from_prompt)
+    else:
+        mcp.run()
