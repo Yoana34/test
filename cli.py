@@ -242,7 +242,7 @@ def display_tables(get_schema_func: Callable[[], Dict[str, Any]]):
 
 
 def display_logs(get_logs_func: Callable[[], Any]):
-    """显示查询日志"""
+    """显示查询日志，支持多行SQL完整输出"""
     clear_screen()
     print("=" * 80)
     print("  查询日志  ".center(50))
@@ -253,7 +253,7 @@ def display_logs(get_logs_func: Callable[[], Any]):
         input("\n按Enter键继续...")
         return
     for log in logs:
-        print(f"[{log.get('timestamp', '')}] {log.get('sql', '')}")
+        print(f"[{log.get('timestamp', '')}]\n{log.get('sql', '')}\n")
     input("\n按Enter键继续...")
 
 

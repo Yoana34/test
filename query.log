@@ -20,3 +20,6 @@ WHERE ID IN (
 2025-06-26 15:52:09 - SQL: SELECT title
 FROM course
 WHERE course_id NOT IN (SELECT DISTINCT course_id FROM prereq)
+2025-06-26 17:25:09 - SQL: SELECT title, credits FROM course ORDER BY title, credits;
+2025-06-26 18:09:20 - SQL: SELECT salary FROM employee WHERE name = 'gong';
+2025-06-26 18:11:37 - SQL: SELECT salary FROM employee WHERE name = 'gong';

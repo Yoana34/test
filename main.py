@@ -2,7 +2,8 @@ import os
 import logging
 from typing import Any, Dict
 import MySQLdb
-from fastapi import FastAPI
+import re
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from mcp.server.fastmcp import FastMCP
@@ -35,6 +36,73 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+FORBIDDEN_FIELDS = ['password', 'salary', 'ssn', 'credit_card']
+
+def security_check(sql: str) -> (bool, str):
+    """Performs all security checks on the SQL query."""
+    is_readonly, reason = is_readonly_query(sql)
+    if not is_readonly:
+        return False, reason
+
+    has_forbidden, reason = contains_forbidden_fields(sql)
+    if has_forbidden:
+        return False, reason
+
+    is_injection, reason = is_injection_attempt(sql)
+    if is_injection:
+        return False, reason
+
+    return True, ""
+
+def is_readonly_query(sql: str) -> (bool, str):
+    """检测是否是仅select语句"""
+    sql_strip_lower = sql.strip().lower()
+    if not sql_strip_lower.startswith('select'):
+        return False, "Security violation: Only SELECT statements are allowed."
+    
+    if ';' in sql_strip_lower.rstrip(';'):
+        return False, "Security violation: Multiple SQL statements are not allowed."
+    
+    unsafe_keywords = ["insert", "update", "delete", "drop", "alter", "truncate", "create", "grant", "revoke"]
+    for keyword in unsafe_keywords:
+        if re.search(r'\b' + keyword + r'\b', sql_strip_lower):
+            return False, f"Security violation: Use of '{keyword}' is not allowed in SELECT statements."
+    return True, ""
+
+def contains_forbidden_fields(sql: str) -> (bool, str):
+    """查询是否访问敏感字段（支持表名、别名、引号等写法）"""
+    sql_lower = sql.lower()
+    # 只检测select ... from之间的内容
+    m = re.search(r'select(.*?)from', sql_lower, re.DOTALL)
+    if not m:
+        return False, ""
+    select_fields = m.group(1)
+    for field in FORBIDDEN_FIELDS:
+        # 匹配 salary, t.salary, instructor.salary, `salary`, "salary"
+        pattern = r'(\b|\W)(' + re.escape(field) + r')(\b|\W)'
+        if re.search(pattern, select_fields):
+            return True, f"Security violation: Access to sensitive field '{field}' is forbidden."
+    return False, ""
+
+def is_injection_attempt(sql: str) -> (bool, str):
+    """A simple check for common SQL injection patterns."""
+    sql_lower = sql.lower()
+    injection_patterns = [
+        r"(\s*or\s+['\"]?\w+['\"]?\s*=\s*['\"]?\w+['\"]?)",
+        r"(\s*union\s+select\s+)",
+        r"(--|#|/\*)"
+    ]
+    for pattern in injection_patterns:
+        if re.search(pattern, sql_lower):
+            return True, "Security violation: Potential SQL injection pattern detected."
+
+    suspicious_keywords = ['sleep', 'benchmark', 'load_file', 'outfile', 'information_schema']
+    for keyword in suspicious_keywords:
+        if keyword in sql_lower:
+            return True, f"Security violation: Use of suspicious keyword '{keyword}' is not allowed."
+            
+    return False, ""
+
 class QueryRequest(BaseModel):
     sql: str
 
@@ -51,7 +119,15 @@ def api_query_data(req: QueryRequest):
     return query_data(req.sql)
 
 @app.get("/logs")
-def api_get_logs(limit: int = 100):
+def api_get_logs(request: Request, limit: int = 100):
+    if request.query_params.get("raw") == "1":
+        if not os.path.exists("query.log"):
+            return {"raw_lines": []}
+        with open("query.log", "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        return {"raw_lines": lines}
+
+    # Fallback for simple clients
     logs = []
     if not os.path.exists("query.log"):
         return {"logs": []}
@@ -119,6 +195,9 @@ def get_tables() -> Dict[str, Any]:
         tables = cursor.fetchall()
         table_names = [list(table.values())[0] for table in tables]
         return {"database": DB_CONFIG["db"], "tables": table_names}
+    except MySQLdb.Error as e:
+        print(f"Database connection error: {e}")
+        raise
     finally:
         if cursor:
             cursor.close()
@@ -138,8 +217,11 @@ def is_safe_query(sql: str) -> bool:
 
 @mcp.tool()
 def query_data(sql: str) -> Dict[str, Any]:
-    if not is_safe_query(sql):
-        return {"success": False, "error": "Potentially unsafe query detected. Only SELECT queries are allowed."}
+    is_safe, reason = security_check(sql)
+    if not is_safe:
+        logger.warning(f"Blocked unsafe query: {sql}. Reason: {reason}")
+        return {"success": False, "error": reason}
+        
     logger.info(f"Executing query: {sql}")
     with open("query.log", "a", encoding="utf-8") as f:
         f.write(f"{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} - SQL: {sql}\n")
