@@ -125,7 +125,7 @@ def check_database_connection():
 
 def natural_language_query_page():
     """自然语言查询页面"""
-    st.header("🔍 自然语言查询")
+    st.header("自然语言查询")
     
     # 检查数据库连接
     connected, schema_or_error = check_database_connection()
@@ -152,7 +152,7 @@ def natural_language_query_page():
                 st.warning("请输入查询内容")
     
     with col2:
-        st.subheader("📝 示例查询")
+        st.subheader("示例查询")
         examples = [
             "查询所有课程的名称和学分",
             "找出所有有多个先修课程的课程",
@@ -168,7 +168,7 @@ def natural_language_query_page():
 
 def database_schema_page():
     """数据库表结构页面"""
-    st.header("📋 数据库表结构")
+    st.header("数据库表结构")
     
     # 检查数据库连接
     connected, schema_or_error = check_database_connection()
@@ -237,7 +237,7 @@ def database_schema_page():
 
 def table_list_page():
     """表列表页面"""
-    st.header("📋 数据库表列表")
+    st.header("数据库表列表")
     
     # 检查数据库连接
     connected, schema_or_error = check_database_connection()
@@ -286,11 +286,11 @@ def table_list_page():
                 st.session_state.switch_to_schema = True
                 st.rerun()
         else:
-            st.info("📭 没有可用的表")
+            st.info("没有可用的表")
 
 def json_query_page():
     """JSON结果查询页面"""
-    st.header("🔍 自然语言查询 (JSON结果)")
+    st.header("自然语言查询 (JSON结果)")
     
     # 检查数据库连接
     connected, schema_or_error = check_database_connection()
@@ -315,7 +315,7 @@ def json_query_page():
 
 def query_logs_page():
     """查询日志页面"""
-    st.header("📝 查询日志")
+    st.header("查询日志")
     
     # 日志设置
     col1, col2 = st.columns([2, 1])
@@ -336,7 +336,7 @@ def query_logs_page():
             return
         
         # 显示日志
-        st.subheader(f"📋 最近 {len(logs)} 条查询日志")
+        st.subheader(f"最近 {len(logs)} 条查询日志")
         
         for i, log in enumerate(reversed(logs)):
             with st.expander(f"查询 {len(logs) - i} - {log.get('timestamp', '未知时间')}", expanded=False):
@@ -376,7 +376,7 @@ def process_query(natural_query: str):
                 return
             
             # 显示生成的SQL
-            st.subheader("📝 生成的SQL语句")
+            st.subheader("生成的SQL语句")
             st.markdown(f'<div class="sql-box">{generated_sql}</div>', unsafe_allow_html=True)
             
             # 执行查询
@@ -387,7 +387,7 @@ def process_query(natural_query: str):
                     st.session_state.success_count += 1
                     
                     # 显示查询结果
-                    st.subheader("📊 查询结果")
+                    st.subheader("查询结果")
                     
                     if result["rowCount"] == 0:
                         st.info("没有找到匹配的数据")
@@ -442,7 +442,7 @@ def process_json_query(natural_query: str):
                 return
             
             # 显示生成的SQL
-            st.subheader("📝 生成的SQL语句")
+            st.subheader("生成的SQL语句")
             st.markdown(f'<div class="sql-box">{generated_sql}</div>', unsafe_allow_html=True)
             
             # 执行查询
@@ -451,7 +451,7 @@ def process_json_query(natural_query: str):
                 
                 if result["success"]:
                     # 显示JSON结果
-                    st.subheader("📊 JSON查询结果")
+                    st.subheader("JSON查询结果")
                     
                     # 格式化JSON
                     json_result = {
@@ -477,7 +477,7 @@ def process_json_query(natural_query: str):
                     
                     # 同时显示表格形式
                     if result["rowCount"] > 0:
-                        st.subheader("📊 表格形式结果")
+                        st.subheader("表格形式结果")
                         df = pd.DataFrame(result["results"])
                         st.dataframe(df, use_container_width=True)
                     
@@ -513,7 +513,7 @@ def main():
         connected, schema_or_error = check_database_connection()
         if connected:
             st.success("✅ 数据库连接正常")
-            st.write(f"📋 数据库表数量: {len(schema_or_error)}")
+            st.write(f"数据库表数量: {len(schema_or_error)}")
         else:
             st.error("❌ 数据库连接失败")
             st.write(f"错误: {schema_or_error}")

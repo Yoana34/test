@@ -137,3 +137,9 @@ WHERE course_id NOT IN (SELECT DISTINCT course_id FROM prereq);
 2025-06-27 13:19:32 - SQL: SELECT title
 FROM course
 WHERE course_id NOT IN (SELECT DISTINCT course_id FROM prereq)
+2025-06-27 13:25:52 - SQL: SELECT title
+FROM course
+WHERE course_id NOT IN (SELECT DISTINCT course_id FROM prereq)
+2025-06-27 13:29:08 - SQL: SELECT title
+FROM course
+WHERE course_id NOT IN (SELECT DISTINCT course_id FROM prereq);
