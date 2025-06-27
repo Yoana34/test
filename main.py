@@ -39,7 +39,7 @@ app.add_middleware(
 FORBIDDEN_FIELDS = ['password', 'salary', 'ssn', 'credit_card']
 
 def security_check(sql: str) -> (bool, str):
-    """Performs all security checks on the SQL query."""
+    """安全控制判断总函数."""
     is_readonly, reason = is_readonly_query(sql)
     if not is_readonly:
         return False, reason
@@ -85,7 +85,7 @@ def contains_forbidden_fields(sql: str) -> (bool, str):
     return False, ""
 
 def is_injection_attempt(sql: str) -> (bool, str):
-    """A simple check for common SQL injection patterns."""
+    """拦截SQL注入攻击"""
     sql_lower = sql.lower()
     injection_patterns = [
         r"(\s*or\s+['\"]?\w+['\"]?\s*=\s*['\"]?\w+['\"]?)",

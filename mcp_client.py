@@ -17,6 +17,14 @@ def get_schema() -> Dict[str, Any]:
     return data
 
 
+def get_tables() -> List[str]:
+    """通过MCP Server获取数据库表列表"""
+    resp = requests.get(f"{MCP_SERVER_URL}/tables")
+    resp.raise_for_status()
+    data = resp.json()
+    return data.get("tables", [])
+
+
 def query_data(sql: str) -> Dict[str, Any]:
     """通过MCP Server执行SQL查询并返回结果"""
     resp = requests.post(f"{MCP_SERVER_URL}/query_data", json={"sql": sql})

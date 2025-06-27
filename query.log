@@ -23,3 +23,111 @@ WHERE course_id NOT IN (SELECT DISTINCT course_id FROM prereq)
 2025-06-26 17:25:09 - SQL: SELECT title, credits FROM course ORDER BY title, credits;
 2025-06-26 18:09:20 - SQL: SELECT salary FROM employee WHERE name = 'gong';
 2025-06-26 18:11:37 - SQL: SELECT salary FROM employee WHERE name = 'gong';
+2025-06-26 19:01:36 - SQL: SELECT c.title
+FROM course c
+WHERE c.course_id = (
+    SELECT p.prereq_id
+    FROM prereq p
+    WHERE p.course_id = (
+        SELECT course_id
+        FROM course
+        WHERE title = 'International Finance'
+    )
+)
+2025-06-26 19:18:31 - SQL: SELECT c.title
+FROM course c
+WHERE c.course_id = (
+    SELECT p.prereq_id
+    FROM prereq p
+    WHERE p.course_id = (
+        SELECT course_id
+        FROM course
+        WHERE title = 'International Finance'
+    )
+);
+2025-06-27 11:05:26 - SQL: SELECT c.title
+FROM course c
+JOIN prereq p ON c.course_id = p.prereq_id
+WHERE p.course_id = '105';
+2025-06-27 11:27:30 - SQL: SELECT c.title
+FROM course c
+WHERE c.course_id = (
+    SELECT p.prereq_id
+    FROM prereq p
+    WHERE p.course_id = (
+        SELECT course_id
+        FROM course
+        WHERE title = 'International Finance'
+    )
+)
+2025-06-27 11:31:06 - SQL: SELECT title, credits FROM course ORDER BY title, credits;
+2025-06-27 11:31:51 - SQL: SELECT course.title, course.credits, course.dept_name
+FROM course
+WHERE course.course_id IN (
+    SELECT prereq.course_id
+    FROM prereq
+    GROUP BY prereq.course_id
+    HAVING COUNT(prereq.prereq_id) > 1
+);
+2025-06-27 11:33:04 - SQL: SELECT s.name
+FROM student s
+WHERE s.ID IN (
+    SELECT a.s_ID
+    FROM advisor a
+    GROUP BY a.s_ID
+    HAVING COUNT(a.i_ID) > 1
+);
+2025-06-27 11:34:23 - SQL: SELECT title
+FROM course
+WHERE course_id NOT IN (SELECT DISTINCT course_id FROM prereq)
+2025-06-27 11:35:38 - SQL: SELECT i.name, i.dept_name
+FROM instructor i
+WHERE i.ID IN (
+    SELECT a.i_ID
+    FROM advisor a
+    GROUP BY a.i_ID
+    HAVING COUNT(a.s_ID) > 5
+)
+2025-06-27 11:37:07 - SQL: SELECT c.title, c.dept_name, c.credits
+FROM course c
+WHERE c.course_id IN (
+    SELECT p.course_id
+    FROM prereq p
+    GROUP BY p.course_id
+    HAVING COUNT(p.prereq_id) > 1
+)
+ORDER BY c.credits DESC;
+2025-06-27 11:43:34 - SQL: SELECT c.title
+FROM course c
+WHERE c.course_id = (
+    SELECT p.prereq_id
+    FROM prereq p
+    WHERE p.course_id = (
+        SELECT course_id
+        FROM course
+        WHERE title = 'International Finance'
+    )
+)
+2025-06-27 11:44:29 - SQL: SELECT c.title, c.dept_name, c.credits
+FROM course c
+WHERE c.course_id IN (
+    SELECT p.course_id
+    FROM prereq p
+    GROUP BY p.course_id
+    HAVING COUNT(p.prereq_id) > 1
+)
+ORDER BY c.credits DESC;
+2025-06-27 12:44:31 - SQL: SELECT s.name
+FROM student s
+WHERE s.ID IN (
+    SELECT a.s_ID
+    FROM advisor a
+    GROUP BY a.s_ID
+    HAVING COUNT(a.i_ID) > 1
+);
+2025-06-27 13:04:05 - SQL: SELECT title
+FROM course
+WHERE course_id NOT IN (SELECT DISTINCT course_id FROM prereq)
+2025-06-27 13:09:20 - SQL: SELECT title
+FROM course
+WHERE course_id NOT IN (SELECT DISTINCT course_id FROM prereq)
