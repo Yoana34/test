@@ -392,56 +392,9 @@ def process_query(natural_query: str):
                     if result["rowCount"] == 0:
                         st.info("没有找到匹配的数据")
                     else:
-                        # 转换为DataFrame
+                        # 转换为DataFrame并显示
                         df = pd.DataFrame(result["results"])
-                        
-                        # 分页设置
-                        page_size = 10  # 每页显示10行
-                        total_pages = (len(df) + page_size - 1) // page_size
-                        
-                        # 初始化当前页码
-                        if 'current_page' not in st.session_state:
-                            st.session_state.current_page = 1
-                        
-                        # 分页控制
-                        col1, col2, col3, col4 = st.columns([1, 2, 2, 1])
-                        
-                        with col1:
-                            if st.button("上一页", disabled=st.session_state.current_page <= 1):
-                                st.session_state.current_page -= 1
-                                st.rerun()
-                        
-                        with col2:
-                            st.write(f"第 {st.session_state.current_page} 页，共 {total_pages} 页")
-                        
-                        with col3:
-                            # 页码输入
-                            new_page = st.number_input(
-                                "跳转到页数:",
-                                min_value=1,
-                                max_value=total_pages,
-                                value=st.session_state.current_page,
-                                key="page_input"
-                            )
-                            if new_page != st.session_state.current_page:
-                                st.session_state.current_page = new_page
-                                st.rerun()
-                        
-                        with col4:
-                            if st.button("下一页", disabled=st.session_state.current_page >= total_pages):
-                                st.session_state.current_page += 1
-                                st.rerun()
-                        
-                        # 计算当前页的数据
-                        start_idx = (st.session_state.current_page - 1) * page_size
-                        end_idx = min(start_idx + page_size, len(df))
-                        current_page_df = df.iloc[start_idx:end_idx]
-                        
-                        # 显示当前页数据
-                        st.dataframe(current_page_df, use_container_width=True)
-                        
-                        # 显示分页信息
-                        st.write(f"显示第 {start_idx + 1} - {end_idx} 行，共 {len(df)} 行数据")
+                        st.dataframe(df, use_container_width=True)
                         
                         # 显示统计信息
                         col1, col2, col3 = st.columns(3)
@@ -522,60 +475,11 @@ def process_json_query(natural_query: str):
                         mime="application/json"
                     )
                     
-                    # 同时显示表格形式（带分页）
+                    # 同时显示表格形式
                     if result["rowCount"] > 0:
                         st.subheader("📊 表格形式结果")
-                        
-                        # 转换为DataFrame
                         df = pd.DataFrame(result["results"])
-                        
-                        # 分页设置
-                        page_size = 10  # 每页显示10行
-                        total_pages = (len(df) + page_size - 1) // page_size
-                        
-                        # 初始化当前页码（JSON查询专用）
-                        if 'json_current_page' not in st.session_state:
-                            st.session_state.json_current_page = 1
-                        
-                        # 分页控制
-                        col1, col2, col3, col4 = st.columns([1, 2, 2, 1])
-                        
-                        with col1:
-                            if st.button("上一页", disabled=st.session_state.json_current_page <= 1, key="json_prev"):
-                                st.session_state.json_current_page -= 1
-                                st.rerun()
-                        
-                        with col2:
-                            st.write(f"第 {st.session_state.json_current_page} 页，共 {total_pages} 页")
-                        
-                        with col3:
-                            # 页码输入
-                            new_page = st.number_input(
-                                "跳转到页数:",
-                                min_value=1,
-                                max_value=total_pages,
-                                value=st.session_state.json_current_page,
-                                key="json_page_input"
-                            )
-                            if new_page != st.session_state.json_current_page:
-                                st.session_state.json_current_page = new_page
-                                st.rerun()
-                        
-                        with col4:
-                            if st.button("下一页", disabled=st.session_state.json_current_page >= total_pages, key="json_next"):
-                                st.session_state.json_current_page += 1
-                                st.rerun()
-                        
-                        # 计算当前页的数据
-                        start_idx = (st.session_state.json_current_page - 1) * page_size
-                        end_idx = min(start_idx + page_size, len(df))
-                        current_page_df = df.iloc[start_idx:end_idx]
-                        
-                        # 显示当前页数据
-                        st.dataframe(current_page_df, use_container_width=True)
-                        
-                        # 显示分页信息
-                        st.write(f"显示第 {start_idx + 1} - {end_idx} 行，共 {len(df)} 行数据")
+                        st.dataframe(df, use_container_width=True)
                     
                     st.markdown('<div class="result-box">✅ JSON查询执行成功！</div>', unsafe_allow_html=True)
                 else:
