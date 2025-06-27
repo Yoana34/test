@@ -53,9 +53,9 @@ mcp-mysql-server/
 ├── mcp_client.py         # MCP客户端，负责与后端通信
 ├── main.py               # FastAPI后端服务（MCP Server）
 ├── query.log             # 查询日志
-├── pyproject.toml        # 依赖管理
-├── README.md             # 项目说明（本文件）
-└── ...
+└── pyproject.toml        # 依赖管理
+ 
+...
 ```
 
 ---
@@ -64,26 +64,25 @@ mcp-mysql-server/
 
 ### 1. 安装依赖
 
-建议使用Python 3.8+，推荐虚拟环境：
 
 ```bash
-pip install -r requirements.txt
-# 或
 pip install streamlit pandas requests fastapi uvicorn
 ```
 
 ### 2. 配置数据库和API密钥
 
-- 配置MySQL数据库连接环境变量（可在`.env`或系统环境变量中设置）：
+- 配置MySQL数据库（main.py）：
   ```
-  DB_HOST=xxx
-  DB_USER=xxx
-  DB_PASSWORD=xxx
-  DB_NAME=xxx
+  "host": os.getenv("DB_HOST", "localhost"),
+  "user": os.getenv("DB_USER", "root"),
+  "passwd": os.getenv("DB_PASSWORD", "password"),
+  "db": os.getenv("DB_NAME", "college"),
+  "port": int(os.getenv("DB_PORT", 3306))
   ```
-- 配置大模型API密钥（如通义千问）：
+- 配置大模型API密钥及URL（llm_client.py）：
   ```
   QWEN_API_KEY=sk-xxxxxx
+  QWEN_API_URL
   ```
 
 ### 3. 启动后端服务
@@ -93,7 +92,7 @@ python main.py
 # 默认监听 http://localhost:8000
 ```
 
-### 4. 启动前端GUI
+### 4. GUI模式
 
 ```bash
 python run_gui.py
@@ -103,7 +102,7 @@ python run_gui.py
 ### 5. 命令行模式
 
 ```bash
-python cli.py
+python main.py cli
 ```
 
 ---
@@ -115,37 +114,6 @@ python cli.py
 - **表列表**：一览所有表及字段数，支持快速跳转表结构。
 - **JSON结果查询**：直接获取结构化JSON结果。
 - **查询日志**：历史查询一键回溯。
-- **安全提示**：自动拦截危险SQL和敏感字段。
 
----
-
-## 技术亮点
-
-- **Prompt工程**：结构化Schema、Few-shot示例、多轮上下文、SQL优化指令，极大提升SQL生成准确率和效率。
-- **安全防护**：只读SQL、敏感字段拦截、注入检测。
-- **高可用架构**：前后端解耦，支持多种大模型API。
-- **现代化UI**：Streamlit打造，交互友好，支持分页、下载、跳转等。
-
----
-
-## 常见问题
-
-- **SQL生成不准确？**  
-  可在`llm_client.py`中自定义Few-shot示例，或优化Prompt模板。
-- **数据库连接失败？**  
-  检查环境变量和MySQL服务状态。
-- **API调用失败？**  
-  检查API密钥和网络连通性。
-
----
-
-## 贡献与交流
-
-欢迎PR、Issue和建议！  
-如需定制化开发、模型适配、Prompt优化等服务，请联系作者。
-
----
-
-## License
-
-MIT
+## Reference
+https://github.com/alexcc4/mcp-mysql-server/tree/master
