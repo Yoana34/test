@@ -143,3 +143,20 @@ WHERE course_id NOT IN (SELECT DISTINCT course_id FROM prereq)
 2025-06-27 13:29:08 - SQL: SELECT title
 FROM course
 WHERE course_id NOT IN (SELECT DISTINCT course_id FROM prereq);
+2025-06-27 15:07:10 - SQL: SELECT title, credits FROM course ORDER BY title, credits;
+2025-06-27 15:30:26 - SQL: SELECT title, credits FROM course ORDER BY title, credits;
+2025-06-27 15:59:29 - SQL: SELECT course.title, course.credits FROM course ORDER BY course.title, course.credits;
+2025-06-27 16:02:35 - SQL: SELECT c2.title  
+FROM course c1  
+JOIN prereq p ON c1.course_id = p.course_id  
+JOIN course c2 ON p.prereq_id = c2.course_id  
+WHERE c1.title = 'International Finance';
+2025-06-27 16:05:03 - SQL: SELECT c.title  
+FROM course c  
+LEFT JOIN prereq p ON c.course_id = p.course_id  
+WHERE p.prereq_id IS NULL;
+2025-06-27 16:07:31 - SQL: SELECT c2.title  
+FROM course c1  
+JOIN prereq p ON c1.course_id = p.course_id  
+JOIN course c2 ON p.prereq_id = c2.course_id  
+WHERE c1.title = 'International Finance';

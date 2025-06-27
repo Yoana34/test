@@ -9,61 +9,93 @@ QWEN_API_KEY = os.getenv("QWEN_API_KEY", "sk-1b77e5585d7247a1959baa1d8249264f")
 QWEN_API_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
 
 
-def generate_sql_from_prompt(prompt: str, schema: Dict[str, Any]) -> str:
-    #根据自然语言提示和数据库模式生成SQL
-    # 构造包含数据库Schema的Prompt
-    schema_description = "数据库模式信息：\n"
-
-    valid_tables = 0
-    for table_name, columns in schema.items():
-        # 跳过无效的表结构
-        if not isinstance(columns, list) or not columns:
-            print(f"警告：表 {table_name} 的列信息无效")
-            continue
-
-        if not isinstance(columns[0], dict):
-            print(f"警告：表 {table_name} 的列格式不正确")
-            continue
-
-        schema_description += f"表名: {table_name}\n"
-        schema_description += "  列信息:\n"
-
-        for column in columns:
-            col_name = column.get("Field") or column.get("name", "未知列名")
-            col_type = column.get("Type") or column.get("type", "未知类型")
-            col_null = column.get("Null") or column.get("null", "未知")
-
-            schema_description += f"    {col_name}: {col_type} ({'可空' if col_null == 'YES' else '非空'})\n"
-
-        # 新增：附加样例数据
-        try:
-            samples = get_sample_rows(table_name, 3)
-            if samples:
-                schema_description += "  示例数据:\n"
-                for row in samples:
-                    row_str = ", ".join(f"{k}: {v}" for k, v in row.items())
-                    schema_description += f"    {row_str}\n"
-        except Exception as e:
-            schema_description += "  （获取示例数据失败）\n"
-
-        valid_tables += 1
-
-    if valid_tables == 0:
-        print("错误：未找到有效的表结构信息")
-        return "错误：无法获取数据库表结构"
-
-    # 构造完整Prompt
-    full_prompt = f"""
-    请根据以下数据库模式和用户查询生成正确的SQL语句。
-    只返回SQL语句，不要任何解释。
-
-    {schema_description}
-
-    用户查询: {prompt}
-    SQL语句:
+def generate_sql_from_prompt(prompt: str, schema: Dict[str, Any], history: list = None) -> str:
     """
-
-    # 调用通义API
+    根据自然语言提示和数据库模式生成高效、准确的SQL。
+    支持few-shot示例和上下文。
+    """
+    # 1. 构造数据库Schema描述
+    schema_description = "数据库结构如下：\n"
+    for table_name, columns in schema.items():
+        if not isinstance(columns, list) or not columns:
+            continue
+        schema_description += f"表: {table_name}\n  字段: "
+        schema_description += ", ".join(
+            f"{col.get('Field') or col.get('name', '未知')}: {col.get('Type') or col.get('type', '未知')}" for col in columns
+        ) + "\n"
+        # 主键/外键/约束
+        pk = [col.get('Field') or col.get('name') for col in columns if (col.get('Key') or col.get('key')) == 'PRI']
+        if pk:
+            schema_description += f"  主键: {', '.join(pk)}\n"
+        fk = [col.get('Field') or col.get('name') for col in columns if (col.get('Key') or col.get('key')) == 'MUL']
+        if fk:
+            schema_description += f"  外键: {', '.join(fk)}\n"
+        # 示例数据
+        try:
+            samples = get_sample_rows(table_name, 2)
+            if samples:
+                schema_description += "  示例: " + "; ".join(
+                    ", ".join(f"{k}:{v}" for k, v in row.items()) for row in samples
+                ) + "\n"
+        except Exception:
+            pass
+    
+    # 2. Few-shot示例（可扩展）
+    few_shot_examples = [
+        {
+            "user": "列出所有学生的姓名和年龄",
+            "sql": "SELECT name, age FROM student;"
+        },
+        {
+            "user": "查询所有课程的名称和学分",
+            "sql": "SELECT name, credit FROM course;"
+        },
+        {
+            "user": "找出所有有多个先修课程的课程",
+            "sql": "SELECT course_id FROM prerequisite GROUP BY course_id HAVING COUNT(*) > 1;"
+        },
+        {
+            "user": "查询所有有多个导师的学生姓名",
+            "sql": "SELECT s.name FROM student s JOIN advisor a ON s.id = a.s_id GROUP BY s.id HAVING COUNT(a.t_id) > 1;"
+        },
+        {
+            "user": "查找课程'International Finance'的先修课程标题",
+            "sql": "SELECT c2.title FROM course c1 JOIN prerequisite p ON c1.id = p.course_id JOIN course c2 ON p.prereq_id = c2.id WHERE c1.title = 'International Finance';"
+        }
+    ]
+    
+    # 3. 多轮上下文（如有）
+    context_str = ""
+    if history:
+        for turn in history[-3:]:  # 只取最近3轮
+            context_str += f"用户: {turn['user']}\nSQL: {turn['sql']}\n"
+    
+    # 4. SQL优化指令
+    optimize_tip = (
+        "请生成高效、可读性强的SQL，避免不必要的嵌套和低效子查询。"
+        "如可用JOIN替代子查询请优先使用JOIN。"
+        "如可用聚合函数请直接使用。"
+        "如有更优写法请直接优化。"
+        "只输出最终SQL，不要解释。"
+    )
+    
+    # 5. 组装Prompt
+    prompt_parts = [
+        "你是一个专业的SQL生成助手。",
+        schema_description,
+        "--- 示例 ---"
+    ]
+    for ex in few_shot_examples:
+        prompt_parts.append(f"用户: {ex['user']}\nSQL: {ex['sql']}")
+    if context_str:
+        prompt_parts.append("--- 上下文 ---\n" + context_str)
+    prompt_parts.append("--- 任务 ---")
+    prompt_parts.append(f"用户: {prompt}")
+    prompt_parts.append(optimize_tip)
+    prompt_parts.append("SQL:")
+    full_prompt = "\n".join(prompt_parts)
+    
+    # 调用API
     response = call_qwen_api(full_prompt)
     return parse_sql_response(response)
 

@@ -1,9 +1,3 @@
-#!/usr/bin/env python3
-"""
-Streamlit GUI 启动脚本
-用于启动自然语言数据库查询系统的图形界面
-"""
-
 import subprocess
 import sys
 import os
@@ -30,10 +24,10 @@ def main():
             "--browser.gatherUsageStats", "false"
         ], check=True)
     except subprocess.CalledProcessError as e:
-        print(f"❌ 启动失败: {e}")
+        print(f"启动失败: {e}")
         print("请确保已安装Streamlit: pip install streamlit")
     except KeyboardInterrupt:
-        print("\n👋 应用已停止")
+        print("\n 应用已停止")
 
 if __name__ == "__main__":
     main() 
