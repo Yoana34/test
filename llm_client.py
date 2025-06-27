@@ -23,14 +23,14 @@ def generate_sql_from_prompt(prompt: str, schema: Dict[str, Any], history: list 
         schema_description += ", ".join(
             f"{col.get('Field') or col.get('name', '未知')}: {col.get('Type') or col.get('type', '未知')}" for col in columns
         ) + "\n"
-        # 主键/外键/约束
+
         pk = [col.get('Field') or col.get('name') for col in columns if (col.get('Key') or col.get('key')) == 'PRI']
         if pk:
             schema_description += f"  主键: {', '.join(pk)}\n"
         fk = [col.get('Field') or col.get('name') for col in columns if (col.get('Key') or col.get('key')) == 'MUL']
         if fk:
             schema_description += f"  外键: {', '.join(fk)}\n"
-        # 示例数据
+
         try:
             samples = get_sample_rows(table_name, 2)
             if samples:
@@ -64,11 +64,11 @@ def generate_sql_from_prompt(prompt: str, schema: Dict[str, Any], history: list 
         }
     ]
     
-    # 3. 多轮上下文（如有）
-    context_str = ""
-    if history:
-        for turn in history[-3:]:  # 只取最近3轮
-            context_str += f"用户: {turn['user']}\nSQL: {turn['sql']}\n"
+    # # 3. 多轮上下文（如有）
+    # context_str = ""
+    # if history:
+    #     for turn in history[-3:]:  # 只取最近3轮
+    #         context_str += f"用户: {turn['user']}\nSQL: {turn['sql']}\n"
     
     # 4. SQL优化指令
     optimize_tip = (
@@ -87,8 +87,8 @@ def generate_sql_from_prompt(prompt: str, schema: Dict[str, Any], history: list 
     ]
     for ex in few_shot_examples:
         prompt_parts.append(f"用户: {ex['user']}\nSQL: {ex['sql']}")
-    if context_str:
-        prompt_parts.append("--- 上下文 ---\n" + context_str)
+    # if context_str:
+    #     prompt_parts.append("--- 上下文 ---\n" + context_str)
     prompt_parts.append("--- 任务 ---")
     prompt_parts.append(f"用户: {prompt}")
     prompt_parts.append(optimize_tip)

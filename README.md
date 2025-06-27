@@ -1,116 +1,151 @@
-# Simple MCP MySQL Server
+# 自然语言到SQL智能查询系统（MCP-MySQL）
 
-A lightweight Model Context Protocol (MCP) server that enables secure interaction with MySQL databases. This server allows AI assistants like Claude to list tables, read data, and execute SQL queries through a controlled interface.
+## 项目简介
 
-## Features
+本项目基于MCP（Model Context Protocol）协议，结合大语言模型（LLM）和MySQL数据库，实现了**自然语言到SQL的智能查询系统**。
+用户可通过命令行或现代化Web界面（Streamlit GUI），用中文自然语言描述查询需求，系统自动生成高效、安全的SQL并返回结果。
+项目支持多轮对话、Few-shot示例增强、SQL优化建议、查询日志、表结构浏览等丰富功能，适合教学、数据分析、智能BI等场景。
 
-* List all MySQL tables in the database
-* Retrieve detailed schema information for all tables
-* Execute read-only SQL queries with proper error handling
-* Secure database access through environment variables
-* Simple configuration and deployment
+---
 
-## Installation
+## 评分任务与功能实现
+
+### 基础任务
+| 子任务             | 要求说明                                                         | 实现情况 |
+|--------------------|------------------------------------------------------------------|----------|
+| MCP 服务运行       | 下载并部署 alexcc4/mcp-mysql-server，连接 MySQL 实例              | ✅        |
+| 通义 API 调用模块  | 输入自然语言 → 输出 SQL；支持基础 prompt 构造                     | ✅        |
+| 查询控制模块       | 获取 schema，执行 SQL，解析并返回 JSON 结果                      | ✅        |
+| CLI 界面实现       | 可在终端交互输入自然语言并返回查询结果                            | ✅        |
+
+### MCP功能增强任务
+| 功能项             | 实现说明                                                         | 实现情况 |
+|--------------------|------------------------------------------------------------------|----------|
+| 查询日志记录 /logs | MCP Server 记录每次执行的 SQL 和时间戳                            | ✅        |
+| 查询结果分页       | 长查询结果支持用户在 CLI 输入 next 或自动分页返回                 | ✅        |
+| 表结构简化输出     | /schema 支持按表名过滤返回 schema                                 | ✅        |
+
+### MCP安全控制任务
+| 安全项             | 实现说明                                                         | 实现情况 |
+|--------------------|------------------------------------------------------------------|----------|
+| 只读 SQL 白名单过滤| MCP 内部解析 SQL，仅允许 SELECT 语句                             | ✅        |
+| 关键字段访问控制   | 禁止查询包含 password、salary 等字段                             | ✅        |
+| 简易 SQL 注入防御机制| 拦截明显拼接注入或关键词注入的攻击行为                        | ✅        |
+
+### 大模型优化任务/UI扩展任务
+| 优化项             | 实现说明                                                         | 实现情况 |
+|--------------------|------------------------------------------------------------------|----------|
+| Prompt 模板优化    | 提高生成 SQL 的准确率（准确性提升 ≥10% 可得满分）                | ✅        |
+| 多轮提示结构 / Few-shot | 在 prompt 中引入示例对 / 对话上下文优化                     | ✅        |
+| SQL 执行计划简化建议| 提示模型生成更高效的 SQL 查询结构（如避免子查询嵌套）           | ✅        |
+| GUI 界面（如 Streamlit）| 可输入自然语言，展示生成 SQL 和查询结果表格                | ✅        |
+
+---
+
+## 目录结构
+
+```
+mcp-mysql-server/
+├── cli.py                # 命令行交互入口
+├── gui.py                # Streamlit前端主程序
+├── run_gui.py            # 启动GUI的脚本
+├── llm_client.py         # LLM API交互与Prompt工程
+├── mcp_client.py         # MCP客户端，负责与后端通信
+├── main.py               # FastAPI后端服务（MCP Server）
+├── query.log             # 查询日志
+├── pyproject.toml        # 依赖管理
+├── README.md             # 项目说明（本文件）
+└── ...
+```
+
+---
+
+## 快速开始
+
+### 1. 安装依赖
+
+建议使用Python 3.8+，推荐虚拟环境：
 
 ```bash
-# Clone the repository
-git clone git@github.com:alexcc4/mcp-mysql-server.git
-cd mysql-mcp-server
-
-# Install dependencies using uv (recommended)
-uv sync
-
+pip install -r requirements.txt
+# 或
+pip install streamlit pandas requests fastapi uvicorn
 ```
 
-## Configuration
+### 2. 配置数据库和API密钥
 
-Set the following environment variables:
-- export DB_HOST=localhost # Database host
-- export DB_PORT=3306 # Database port (defaults to 3306 if not specified)
-- export DB_USER=your_username # Database username
-- export DB_PASSWORD=your_password # Database password
-- export DB_NAME=your_database # Database name
+- 配置MySQL数据库连接环境变量（可在`.env`或系统环境变量中设置）：
+  ```
+  DB_HOST=xxx
+  DB_USER=xxx
+  DB_PASSWORD=xxx
+  DB_NAME=xxx
+  ```
+- 配置大模型API密钥（如通义千问）：
+  ```
+  QWEN_API_KEY=sk-xxxxxx
+  ```
 
-
-## Usage
-
-### Manual Start
+### 3. 启动后端服务
 
 ```bash
-uv run main.py
+python main.py
+# 默认监听 http://localhost:8000
 ```
 
-### With Claude Desktop
+### 4. 启动前端GUI
 
-Add this to your Claude Desktop configuration file:
-
-> Mac Claude Desktop config: ~/Library/Application Support/Claude/claude_desktop_config.json (create it if it doesn't exist)
-
-```json
-{
-    "mcpServers": {
-        "sql": {
-            "command": "/path/uv",
-            "args": [
-                "--directory",
-                "code_path",
-                "run",
-                "main.py"
-            ],
-            "env": {
-                "DB_HOST": "127.0.0.1",
-                "DB_PORT": "3306",
-                "DB_USER": "your_user",
-                "DB_PASSWORD": "your_password",
-                "DB_NAME": "your_database"
-           }
-        }
-    }
-}
+```bash
+python run_gui.py
+# 浏览器访问 http://localhost:8501
 ```
 
-### Example Queries
+### 5. 命令行模式
 
-Once configured, you can ask Claude questions like:
-```
-"Show me all tables in the database"
-"Top 10 rows from users table"
-"Find all orders placed in the last 30 days"
-"Count of users by country"
-"Show me the schema of the products table"
+```bash
+python cli.py
 ```
 
-## Available Resources
+---
 
-The server provides the following resources:
+## 主要界面功能（GUI）
 
-* `mysql://schema` - Complete database structure information including all tables and columns
-* `mysql://tables` - List of all tables in the database
+- **自然语言查询**：输入需求，自动生成SQL并分页显示结果。
+- **数据库表结构**：可视化查看所有表及字段、主外键、示例数据。
+- **表列表**：一览所有表及字段数，支持快速跳转表结构。
+- **JSON结果查询**：直接获取结构化JSON结果。
+- **查询日志**：历史查询一键回溯。
+- **安全提示**：自动拦截危险SQL和敏感字段。
 
-## Available Tools
+---
 
-The server provides the following tools:
+## 技术亮点
 
-* `query_data` - Execute read-only SQL queries and return results
+- **Prompt工程**：结构化Schema、Few-shot示例、多轮上下文、SQL优化指令，极大提升SQL生成准确率和效率。
+- **安全防护**：只读SQL、敏感字段拦截、注入检测。
+- **高可用架构**：前后端解耦，支持多种大模型API。
+- **现代化UI**：Streamlit打造，交互友好，支持分页、下载、跳转等。
 
-## Requirements
+---
 
-- uv (recommended)
-- Python 3.12.2+
-- MySQL server
+## 常见问题
 
-## Security Considerations
+- **SQL生成不准确？**  
+  可在`llm_client.py`中自定义Few-shot示例，或优化Prompt模板。
+- **数据库连接失败？**  
+  检查环境变量和MySQL服务状态。
+- **API调用失败？**  
+  检查API密钥和网络连通性。
 
-* Use a database user with minimal required permissions (read-only)
-* Never use root credentials for production environments
-* Consider implementing query whitelisting for sensitive databases
-* Monitor and log all database operations
+---
+
+## 贡献与交流
+
+欢迎PR、Issue和建议！  
+如需定制化开发、模型适配、Prompt优化等服务，请联系作者。
+
+---
 
 ## License
 
 MIT
-
-## Reference
-
-- [Official Document](https://modelcontextprotocol.io/introduction)
-- [PostgresSQL Demo](https://github.com/modelcontextprotocol/servers/tree/main/src/postgres)

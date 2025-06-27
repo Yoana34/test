@@ -160,3 +160,57 @@ FROM course c1
 JOIN prereq p ON c1.course_id = p.course_id  
 JOIN course c2 ON p.prereq_id = c2.course_id  
 WHERE c1.title = 'International Finance';
+2025-06-27 16:32:47 - SQL: SELECT c2.title  
+FROM course c1  
+JOIN prereq p ON c1.course_id = p.course_id  
+JOIN course c2 ON p.prereq_id = c2.course_id  
+WHERE c1.title = 'International Finance';
+2025-06-27 16:36:35 - SQL: SELECT course.title, course.credits  
+FROM course  
+ORDER BY course.title, course.credits;
+2025-06-27 16:44:47 - SQL: SELECT c.title, c.credits, c.dept_name  
+FROM course c  
+JOIN prereq p ON c.course_id = p.course_id  
+GROUP BY c.course_id, c.title, c.credits, c.dept_name  
+HAVING COUNT(p.prereq_id) > 1;
+2025-06-27 16:47:00 - SQL: SELECT s.name  
+FROM student s  
+JOIN advisor a ON s.ID = a.s_ID  
+GROUP BY s.ID  
+HAVING COUNT(a.i_ID) > 1;
+2025-06-27 16:48:44 - SQL: SELECT c.title  
+FROM course c  
+LEFT JOIN prerequisite p ON c.course_id = p.course_id  
+WHERE p.prereq_id IS NULL;
+2025-06-27 17:01:18 - SQL: SELECT i.name, d.dept_name  
+FROM instructor i  
+JOIN advisor a ON i.ID = a.i_ID  
+JOIN department d ON i.dept_name = d.dept_name  
+GROUP BY i.ID, i.name, d.dept_name  
+HAVING COUNT(DISTINCT a.s_ID) > 5;
+2025-06-27 17:09:18 - SQL: SELECT DISTINCT c.title  
+FROM course c  
+JOIN prerequisite p ON c.course_id = p.course_id;
+2025-06-27 17:10:19 - SQL: SELECT c.title  
+FROM course c  
+LEFT JOIN prerequisite p ON c.course_id = p.course_id  
+WHERE p.prereq_id IS NULL;
+2025-06-27 17:11:41 - SQL: SELECT c.title  
+FROM course c  
+LEFT JOIN prereq p ON c.course_id = p.course_id  
+WHERE p.prereq_id IS NULL;
+2025-06-27 17:13:35 - SQL: SELECT c.title, d.dept_name, c.credits  
+FROM course c  
+JOIN prerequisite p ON c.course_id = p.course_id  
+JOIN department d ON c.dept_name = d.dept_name  
+GROUP BY c.course_id, c.title, d.dept_name, c.credits  
+HAVING COUNT(p.prereq_id) > 1  
+ORDER BY c.credits DESC;
+2025-06-27 17:14:18 - SQL: SELECT c.title  
+FROM course c  
+LEFT JOIN prerequisite p ON c.course_id = p.course_id  
+WHERE p.prereq_id IS NULL;
+2025-06-27 17:15:07 - SQL: SELECT c.title  
+FROM course c  
+LEFT JOIN prereq p ON c.course_id = p.course_id  
+WHERE p.prereq_id IS NULL;
